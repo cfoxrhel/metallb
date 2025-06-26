@@ -34,6 +34,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 	discovery "k8s.io/api/discovery/v1"
 	cliflag "k8s.io/component-base/cli/flag"
+
+	"go.universe.tf/metallb/internal/env"
+	bgpcontroller "go.universe.tf/metallb/internal/controller/bgpcontroller"
+
+
 )
 
 // Service offers methods to mutate a Kubernetes service object.
@@ -220,9 +225,14 @@ func main() {
 	}
 
 	bgpType, present := os.LookupEnv("METALLB_BGP_TYPE")
-	if !present {
-		bgpType = "native"
+	if env.BGPDisabled() {
+    	level.Info(logger).Log("op", "startup", "msg", "BGP disabled via METALLB_DISABLE_BGP=true")
+    	bgpType = ""
 	}
+	if !present && bgpType == "" {
+    	bgpType = "native"
+	}
+
 
 	validation := config.ValidationFor(bgpType)
 

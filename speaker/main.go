@@ -45,6 +45,7 @@ import (
 	"go.universe.tf/metallb/internal/logging"
 	"go.universe.tf/metallb/internal/speakerlist"
 	"go.universe.tf/metallb/internal/version"
+	"go.universe.tf/metallb/internal/env"
 )
 
 var announcing = prometheus.NewGaugeVec(prometheus.GaugeOpts{
@@ -95,9 +96,14 @@ func main() {
 	// Note: Changing the MetalLB BGP implementation type should be considered
 	//       experimental.
 	bgpType, present := os.LookupEnv("METALLB_BGP_TYPE")
-	if !present {
-		bgpType = "native"
+	if env.BGPDisabled() {
+    	level.Info(logger).Log("op", "startup", "msg", "BGP disabled via METALLB_DISABLE_BGP=true")
+    	bgpType = ""
 	}
+	if !present && bgpType == "" {
+    	bgpType = "native"
+	}
+
 
 	logger, err := logging.Init(*logLevel)
 	if err != nil {

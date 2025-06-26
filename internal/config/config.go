@@ -27,6 +27,8 @@ import (
 	"errors"
 
 	"github.com/mikioh/ipaddr"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 
 	metallbv1beta1 "go.universe.tf/metallb/api/v1beta1"
 	metallbv1beta2 "go.universe.tf/metallb/api/v1beta2"
@@ -37,6 +39,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
+	"go.universe.tf/metallb/internal/env"
 )
 
 type ClusterResources struct {
@@ -242,6 +245,12 @@ func For(resources ClusterResources, validate Validate) (*Config, error) {
 	cfg.Peers, err = peersFor(resources, cfg.BFDProfiles)
 	if err != nil {
 		return nil, err
+	}
+
+	if env.BGPDisabled() {
+		level.Info(logger).Log("op", "config", "msg", "BGP disabled via METALLB_DISABLE_BGP, clearing Peers and Extras")
+	    cfg.Peers = map[string]*Peer{}
+    	cfg.BGPExtras = ""
 	}
 
 	cfg.Pools, err = poolsFor(resources)
