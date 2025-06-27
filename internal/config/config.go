@@ -247,12 +247,6 @@ func For(resources ClusterResources, validate Validate) (*Config, error) {
 		return nil, err
 	}
 
-	if env.BGPDisabled() {
-		level.Info(logger).Log("op", "config", "msg", "BGP disabled via METALLB_DISABLE_BGP, clearing Peers and Extras")
-	    cfg.Peers = map[string]*Peer{}
-    	cfg.BGPExtras = ""
-	}
-
 	cfg.Pools, err = poolsFor(resources)
 	if err != nil {
 		return nil, err
@@ -267,6 +261,18 @@ func For(resources ClusterResources, validate Validate) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+// In internal/config/config.go, at the end of the Parse() function
+
+    if env.BGPDisabled() {
+        if len(cfg.Peers) > 0 {
+            level.Info(logger).Log("op", "bgpConfigCleared", "msg", "BGP is disabled, clearing BGPPeers from config")
+            cfg.Peers = nil
+        }
+        if len(cfg.BGPAdvs) > 0 {
+            level.Info(logger).Log("op", "bgpConfigCleared", "msg", "BGP is disabled, clearing BGPAdvertisements from config")
+            cfg.BGPAdvs = nil
+        }
+    }
 	return cfg, nil
 }
 

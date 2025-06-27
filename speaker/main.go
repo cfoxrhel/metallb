@@ -98,7 +98,7 @@ func main() {
 	bgpType, present := os.LookupEnv("METALLB_BGP_TYPE")
 	if env.BGPDisabled() {
     	level.Info(logger).Log("op", "startup", "msg", "BGP disabled via METALLB_DISABLE_BGP=true")
-    	bgpType = ""
+    	bgpType = "disabled"
 	}
 	if !present && bgpType == "" {
     	bgpType = "native"
